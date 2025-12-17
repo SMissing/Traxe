@@ -1,0 +1,8 @@
+# Note: pyrealsense2 requires Python 3.11 or 3.12 (not 3.14)
+# If using Python 3.14, you'll need to use Python 3.12 in a virtual environment
+pyrealsense2
+opencv-python
+numpy
+screeninfo
+
+

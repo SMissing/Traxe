@@ -1,0 +1,11 @@
+pyrealsense2-2.56.5.9235.dist-info/INSTALLER,sha256=zuuue4knoyJ-UwPPXg8fezS7VCrXJQrAP7zeNuwvFQg,4
+pyrealsense2-2.56.5.9235.dist-info/METADATA,sha256=CVzoijfAKNKt4JmoZKV5DSWBvjkUEWjPVHCuamKvpck,1916
+pyrealsense2-2.56.5.9235.dist-info/RECORD,,
+pyrealsense2-2.56.5.9235.dist-info/REQUESTED,sha256=47DEQpj8HBSa-_TImW-5JCeuQeRkm5NMpJWZG3hSuFU,0
+pyrealsense2-2.56.5.9235.dist-info/WHEEL,sha256=_yG3frlqyoRnp_fwsqa61To6IMnkgfq0PfF0tdf-KPY,96
+pyrealsense2-2.56.5.9235.dist-info/licenses/LICENSE,sha256=BlaAPA9hA2tz7Cw1vUc8saCV3u1ackeoefP1HjKYrSQ,11554
+pyrealsense2/__init__.py,sha256=SeoZvFkDht3bh2sBGDNIMPFXuGXVOXB5HQaCnqxgU3E,87
+pyrealsense2/__pycache__/__init__.cpython-312.pyc,,
+pyrealsense2/pyrealdds.cp312-win_amd64.pyd,sha256=-KKYUAuWzjyvq03fUe1o5MyJfMk7wZmJe7iUPDz95qo,8130048
+pyrealsense2/pyrealsense2.cp312-win_amd64.pyd,sha256=eoq5EjXnZ0Q-VkCLxyr-zEgRFWsonT67JhhdLiKgbSw,13669376
+pyrealsense2/pyrsutils.cp312-win_amd64.pyd,sha256=RIQlFBPrIrlN1Q0WZOQC_sNj4Q93Is13DBKydFBBlnM,743424
