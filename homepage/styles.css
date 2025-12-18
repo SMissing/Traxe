@@ -717,6 +717,205 @@ body {
     filter: drop-shadow(0 4px 8px rgba(0, 0, 0, 0.8));
 }
 
+/* Payment Modal */
+.payment-modal {
+    display: none;
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.85);
+    backdrop-filter: blur(10px);
+    z-index: 10000;
+    align-items: center;
+    justify-content: center;
+    opacity: 0;
+    transition: opacity 0.3s ease;
+}
+
+.payment-modal.active {
+    display: flex;
+    opacity: 1;
+}
+
+.payment-modal-content {
+    background: linear-gradient(135deg, #1a1a1f 0%, #0f0f12 50%, #050508 100%);
+    border: 2px solid var(--accent);
+    border-radius: 20px;
+    width: 90%;
+    max-width: 500px;
+    padding: 0;
+    box-shadow: 0 20px 60px rgba(124, 58, 237, 0.4);
+    position: relative;
+    overflow: hidden;
+}
+
+.payment-modal-content::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-image:
+        radial-gradient(circle at 25% 25%, rgba(255,255,255,0.02) 1px, transparent 1px),
+        radial-gradient(circle at 75% 75%, rgba(255,255,255,0.02) 1px, transparent 1px);
+    background-size: 100px 100px, 150px 150px;
+    pointer-events: none;
+    opacity: 0.3;
+}
+
+.payment-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 1.5rem 2rem;
+    border-bottom: 1px solid rgba(124, 58, 237, 0.3);
+    background: rgba(124, 58, 237, 0.1);
+}
+
+.payment-header h2 {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 1.8rem;
+    letter-spacing: 0.1em;
+    color: var(--accentGlow);
+    margin: 0;
+}
+
+.payment-close {
+    background: none;
+    border: none;
+    color: var(--text1);
+    font-size: 2rem;
+    cursor: pointer;
+    padding: 0;
+    width: 30px;
+    height: 30px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: color 0.3s ease, transform 0.3s ease;
+    line-height: 1;
+}
+
+.payment-close:hover {
+    color: var(--accentGlow);
+    transform: rotate(90deg);
+}
+
+.payment-body {
+    padding: 3rem 2rem;
+    min-height: 300px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    position: relative;
+}
+
+.payment-step {
+    display: none;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    width: 100%;
+}
+
+.payment-step.active {
+    display: flex;
+    animation: fadeIn 0.5s ease;
+}
+
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+        transform: translateY(20px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.payment-loader {
+    margin-bottom: 2rem;
+}
+
+.spinner {
+    width: 60px;
+    height: 60px;
+    border: 4px solid rgba(124, 58, 237, 0.2);
+    border-top-color: var(--accentGlow);
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+    margin: 0 auto;
+}
+
+@keyframes spin {
+    to { transform: rotate(360deg); }
+}
+
+.payment-step h3 {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 2rem;
+    letter-spacing: 0.1em;
+    color: var(--text0);
+    margin-bottom: 1rem;
+}
+
+.payment-status {
+    color: var(--text2);
+    font-size: 1rem;
+    margin-top: 0.5rem;
+}
+
+.payment-amount {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 3.5rem;
+    color: var(--accentOrange);
+    margin: 1rem 0;
+    text-shadow: 0 0 20px rgba(255, 140, 66, 0.5);
+    animation: pulse 2s ease-in-out infinite;
+}
+
+@keyframes pulse {
+    0%, 100% {
+        transform: scale(1);
+    }
+    50% {
+        transform: scale(1.05);
+    }
+}
+
+.payment-success {
+    margin-bottom: 2rem;
+}
+
+.success-icon {
+    width: 100px;
+    height: 100px;
+    color: var(--accentGlow);
+    animation: scaleIn 0.5s ease;
+}
+
+@keyframes scaleIn {
+    from {
+        transform: scale(0);
+    }
+    to {
+        transform: scale(1);
+    }
+}
+
+.payment-note {
+    color: var(--text2);
+    font-size: 0.9rem;
+    font-style: italic;
+    margin-top: 1rem;
+    opacity: 0.7;
+}
+
 /* Responsive Design */
 @media (max-width: 768px) {
     .hero-title {

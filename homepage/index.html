@@ -291,8 +291,8 @@
                 <h2 class="cta-title">Ready to Experience the Future?</h2>
                 <p class="cta-text">Join us as we revolutionize axe throwing with cutting-edge technology and innovative gameplay.</p>
                 <div class="cta-buttons">
-                    <div class="cta-button primary">
-                        <span>Get Started</span>
+                    <div class="cta-button primary" id="purchase-btn">
+                        <span>Purchase</span>
                     </div>
                     <div class="cta-button secondary">
                         <span>Learn More</span>
@@ -312,6 +312,44 @@
             </div>
         </div>
     </footer>
+
+    <!-- Payment Modal -->
+    <div id="payment-modal" class="payment-modal">
+        <div class="payment-modal-content">
+            <div class="payment-header">
+                <h2>TRAXE Payment</h2>
+                <button class="payment-close" id="payment-close">&times;</button>
+            </div>
+            <div class="payment-body">
+                <div id="payment-step-1" class="payment-step active">
+                    <div class="payment-loader">
+                        <div class="spinner"></div>
+                    </div>
+                    <h3>Collecting bank details...</h3>
+                    <p class="payment-status">Please wait while we securely access your payment information.</p>
+                </div>
+                <div id="payment-step-2" class="payment-step">
+                    <div class="payment-loader">
+                        <div class="spinner"></div>
+                    </div>
+                    <h3>Processing Payment</h3>
+                    <p class="payment-amount">£20,000</p>
+                    <p class="payment-status">Please do not close this window...</p>
+                </div>
+                <div id="payment-step-3" class="payment-step">
+                    <div class="payment-success">
+                        <svg viewBox="0 0 100 100" class="success-icon">
+                            <circle cx="50" cy="50" r="45" fill="none" stroke="currentColor" stroke-width="3"/>
+                            <path d="M30 50 L45 65 L70 35" stroke="currentColor" stroke-width="4" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
+                        </svg>
+                    </div>
+                    <h3>Thank You for Your Purchase!</h3>
+                    <p class="payment-status">You will receive <strong>TRAXE Q4 2030</strong></p>
+                    <p class="payment-note">We'll be in touch... eventually.</p>
+                </div>
+            </div>
+        </div>
+    </div>
 
     <script src="script.js"></script>
 </body>

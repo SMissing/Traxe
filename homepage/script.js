@@ -69,5 +69,74 @@ document.addEventListener('DOMContentLoaded', () => {
             this.style.transform = 'translateY(0) scale(1)';
         });
     });
+
+    // Payment Modal
+    const purchaseBtn = document.getElementById('purchase-btn');
+    const paymentModal = document.getElementById('payment-modal');
+    const paymentClose = document.getElementById('payment-close');
+    const paymentStep1 = document.getElementById('payment-step-1');
+    const paymentStep2 = document.getElementById('payment-step-2');
+    const paymentStep3 = document.getElementById('payment-step-3');
+
+    // Open payment modal
+    if (purchaseBtn) {
+        purchaseBtn.addEventListener('click', () => {
+            paymentModal.classList.add('active');
+            // Reset to step 1
+            paymentStep1.classList.add('active');
+            paymentStep2.classList.remove('active');
+            paymentStep3.classList.remove('active');
+            
+            // Start payment flow
+            startPaymentFlow();
+        });
+    }
+
+    // Close payment modal
+    if (paymentClose) {
+        paymentClose.addEventListener('click', () => {
+            closePaymentModal();
+        });
+    }
+
+    // Close on background click
+    if (paymentModal) {
+        paymentModal.addEventListener('click', (e) => {
+            if (e.target === paymentModal) {
+                closePaymentModal();
+            }
+        });
+    }
+
+    // Close on Escape key
+    document.addEventListener('keydown', (e) => {
+        if (e.key === 'Escape' && paymentModal.classList.contains('active')) {
+            closePaymentModal();
+        }
+    });
+
+    function closePaymentModal() {
+        paymentModal.classList.remove('active');
+        // Reset to step 1 for next time
+        setTimeout(() => {
+            paymentStep1.classList.add('active');
+            paymentStep2.classList.remove('active');
+            paymentStep3.classList.remove('active');
+        }, 300);
+    }
+
+    function startPaymentFlow() {
+        // Step 1: Collecting bank details (2 seconds)
+        setTimeout(() => {
+            paymentStep1.classList.remove('active');
+            paymentStep2.classList.add('active');
+            
+            // Step 2: Taking payment (3 seconds)
+            setTimeout(() => {
+                paymentStep2.classList.remove('active');
+                paymentStep3.classList.add('active');
+            }, 3000);
+        }, 2000);
+    }
 });
 
