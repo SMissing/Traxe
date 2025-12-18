@@ -4,5 +4,6 @@ pyrealsense2
 opencv-python
 numpy
 screeninfo
+websocket-client
 
 

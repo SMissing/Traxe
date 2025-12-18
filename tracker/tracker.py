@@ -6,6 +6,11 @@ import sys
 import pyrealsense2 as rs
 from screeninfo import get_monitors
 
+# TRAXE configuration and output modules
+from config import OUTPUT_MODE, WS_URL
+if OUTPUT_MODE == "ws":
+    from output_ws import init_ws_output
+
 # ----------------------------
 # CONFIG YOU WILL TUNE
 # ----------------------------
@@ -70,9 +75,20 @@ depth_sensor = profile.get_device().first_depth_sensor()
 depth_scale = depth_sensor.get_depth_scale()
 print("Depth scale:", depth_scale)
 
-# warm up
-for _ in range(30):
-    pipeline.wait_for_frames()
+# warm up - be more tolerant of slow initial frames
+print("Warming up camera...")
+for i in range(30):
+    try:
+        frames = pipeline.wait_for_frames()
+        if i % 10 == 0:  # Print progress every 10 frames
+            print(f"Warmup: {i+1}/30 frames")
+    except RuntimeError as e:
+        if "Frame didn't arrive" in str(e):
+            print(f"Frame {i+1} took too long, skipping...")
+            continue
+        else:
+            raise
+print("Camera warmup complete")
 
 
 def capture_background():
@@ -90,6 +106,17 @@ def capture_background():
 
 
 bg = capture_background()
+
+# Initialize WebSocket output if needed
+ws_output = None
+if OUTPUT_MODE == "ws":
+    print(f"Initializing WebSocket output mode (URL: {WS_URL})")
+    ws_output = init_ws_output()
+elif OUTPUT_MODE == "visual":
+    print("Running in visual mode (OpenCV fullscreen)")
+else:
+    print(f"Unknown OUTPUT_MODE: {OUTPUT_MODE}. Using visual mode.")
+    OUTPUT_MODE = "visual"
 
 
 # ----------------------------
@@ -258,6 +285,41 @@ def point_in_target(px, py):
     return cv2.pointPolygonTest(contour, (float(px), float(py)), measureDist=False) >= 0
 
 
+def projector_to_normalized(px, py):
+    """
+    Convert projector pixel coordinates to normalized coordinates (0.0-1.0) within target square.
+    Returns (x, y, in_target) where in_target is True if point is inside target square.
+    """
+    tl = target_proj["TL"]
+    br = target_proj["BR"]
+
+    # Check if point is inside target bounds
+    in_target = (px >= tl[0] and px <= br[0] and py >= tl[1] and py <= br[1])
+
+    if in_target:
+        # Normalize within target square
+        target_width = br[0] - tl[0]
+        target_height = br[1] - tl[1]
+
+        x_norm = (px - tl[0]) / target_width
+        y_norm = (py - tl[1]) / target_height
+
+        # Clamp to 0.0-1.0 just in case
+        x_norm = max(0.0, min(1.0, x_norm))
+        y_norm = max(0.0, min(1.0, y_norm))
+
+        return x_norm, y_norm, True
+    else:
+        # For points outside target, still normalize but mark as outside
+        target_width = br[0] - tl[0]
+        target_height = br[1] - tl[1]
+
+        x_norm = (px - tl[0]) / target_width
+        y_norm = (py - tl[1]) / target_height
+
+        return x_norm, y_norm, False
+
+
 try:
     while True:
         frames = pipeline.wait_for_frames()
@@ -317,11 +379,23 @@ try:
             proj_pt = project_cam_to_proj(centroid)
             if proj_pt is not None:
                 px, py = proj_pt
-                if point_in_target(px, py):
-                    markers.append((px, py, now, "hit"))
+
+                # Calculate normalized coordinates for WebSocket output
+                x_norm, y_norm, in_target = projector_to_normalized(px, py)
+
+                if in_target:
+                    # Hit within target
+                    if OUTPUT_MODE == "visual":
+                        markers.append((px, py, now, "hit"))
+                    if OUTPUT_MODE == "ws" and ws_output:
+                        ws_output.send_hit(x_norm, y_norm, int(now * 1000), miss=False)
                 else:
-                    last_miss_time = now
-                    markers.append((px, py, now, "miss"))
+                    # Miss outside target
+                    if OUTPUT_MODE == "visual":
+                        last_miss_time = now
+                        markers.append((px, py, now, "miss"))
+                    if OUTPUT_MODE == "ws" and ws_output:
+                        ws_output.send_hit(x_norm, y_norm, int(now * 1000), miss=True)
 
         # ---- Render frame ----
         frame = np.zeros((PROJ_H, PROJ_W, 3), dtype=np.uint8)
@@ -400,3 +474,5 @@ try:
 finally:
     pipeline.stop()
     cv2.destroyAllWindows()
+    if ws_output:
+        ws_output.close()

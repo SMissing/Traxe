@@ -30,3 +30,6 @@ The server component handles real-time communication between the tracker and pro
 
 - Server runs on port 3000 by default
 - Projector frontend is served at `http://localhost:3000`
+
+
+
