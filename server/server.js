@@ -15,6 +15,9 @@ app.get('/health', (req, res) => {
   res.json({ status: 'ok', timestamp: new Date().toISOString() });
 });
 
+// Serve homepage from root path
+app.use('/', express.static(path.join(__dirname, '../homepage')));
+
 // Serve projector frontend from /projector path
 app.use('/projector', express.static(path.join(__dirname, '../projector')));
 
@@ -39,6 +42,18 @@ wss.on('connection', (ws, req) => {
     // Tracker connection
     trackerConnections.add(ws);
     console.log(`[${new Date().toISOString()}] Tracker connected (${trackerConnections.size} trackers)`);
+
+    // Notify all clients of tracker status change
+    const statusUpdate = JSON.stringify({
+      type: 'status',
+      trackers: trackerConnections.size,
+      clients: clientConnections.size
+    });
+    clientConnections.forEach(clientWs => {
+      if (clientWs.readyState === WebSocket.OPEN) {
+        clientWs.send(statusUpdate);
+      }
+    });
 
     ws.on('message', (data) => {
       try {
@@ -86,6 +101,18 @@ wss.on('connection', (ws, req) => {
     ws.on('close', () => {
       trackerConnections.delete(ws);
       console.log(`[${new Date().toISOString()}] Tracker disconnected (${trackerConnections.size} trackers)`);
+
+      // Notify all clients of tracker status change
+      const statusUpdate = JSON.stringify({
+        type: 'status',
+        trackers: trackerConnections.size,
+        clients: clientConnections.size
+      });
+      clientConnections.forEach(clientWs => {
+        if (clientWs.readyState === WebSocket.OPEN) {
+          clientWs.send(statusUpdate);
+        }
+      });
     });
 
   } else if (url === '/ws') {
@@ -93,10 +120,17 @@ wss.on('connection', (ws, req) => {
     clientConnections.add(ws);
     console.log(`[${new Date().toISOString()}] Client connected (${clientConnections.size} clients)`);
 
-    // Send initial connection confirmation
+    // Send initial connection confirmation with tracker status
     ws.send(JSON.stringify({
       type: 'connected',
       message: 'Connected to TRAXE server'
+    }));
+
+    // Send initial tracker status
+    ws.send(JSON.stringify({
+      type: 'status',
+      trackers: trackerConnections.size,
+      clients: clientConnections.size
     }));
 
     ws.on('close', () => {

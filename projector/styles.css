@@ -121,11 +121,11 @@ body::after {
     height: 100vh;
     position: relative;
     z-index: 10;
+    overflow: hidden; /* Prevent dead space from showing during shake */
 }
 
 #status {
     position: absolute;
-    top: 20px;
     left: 50%;
     transform: translateX(-50%);
     z-index: 1000;
@@ -138,7 +138,6 @@ body::after {
 }
 
 #traxe-logo {
-    height: 48px;
     width: auto;
     display: block;
     filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.6));
@@ -222,6 +221,9 @@ body::after {
     height: 100vh;
     display: block;
     background: transparent;
+    position: relative;
+    /* Transform origin for shake effect */
+    transform-origin: center center;
 }
 
 #markers {
@@ -236,12 +238,11 @@ body::after {
 /* Responsive design */
 @media (max-width: 768px) {
     #status {
-        top: 10px;
         transform: translateX(-50%);
     }
 
     #traxe-logo {
-        height: 32px;
+        /* Height will be set dynamically by JavaScript */
     }
 
     #status-lights {
