@@ -47,6 +47,68 @@ document.addEventListener('DOMContentLoaded', () => {
         observer.observe(el);
     });
 
+    // Animate stats counting up
+    const animateStatValue = (element, finalValue) => {
+        const text = element.textContent.trim();
+        
+        // Extract numeric value and suffix/prefix
+        let match = text.match(/([<]?)(\d+\.?\d*)([%+\w]*)/);
+        if (!match) return; // Skip if no number found
+        
+        const prefix = match[1] || '';
+        const number = parseFloat(match[2]);
+        const suffix = match[3] || '';
+        
+        const duration = 1500; // 1.5 seconds
+        const steps = 60;
+        const increment = number / steps;
+        let current = 0;
+        let step = 0;
+        
+        const timer = setInterval(() => {
+            step++;
+            current = Math.min(number, increment * step);
+            
+            // Format based on original format
+            let displayValue;
+            if (text.includes('.')) {
+                displayValue = current.toFixed(1);
+            } else {
+                displayValue = Math.floor(current);
+            }
+            
+            element.textContent = prefix + displayValue + suffix;
+            
+            if (step >= steps) {
+                clearInterval(timer);
+                element.textContent = text; // Ensure final value is exact
+            }
+        }, duration / steps);
+    };
+
+    // Observe stats section for counting animation
+    const statsObserver = new IntersectionObserver((entries) => {
+        entries.forEach(entry => {
+            if (entry.isIntersecting && !entry.target.classList.contains('counted')) {
+                entry.target.classList.add('counted');
+                const statItems = entry.target.querySelectorAll('.stat-item');
+                statItems.forEach((item, index) => {
+                    const valueElement = item.querySelector('.stat-value');
+                    if (valueElement) {
+                        setTimeout(() => {
+                            animateStatValue(valueElement, valueElement.textContent);
+                        }, index * 100 + 500); // Stagger by 100ms, start after 500ms
+                    }
+                });
+            }
+        });
+    }, { threshold: 0.3 });
+
+    const statsPreview = document.querySelector('.stats-preview');
+    if (statsPreview) {
+        statsObserver.observe(statsPreview);
+    }
+
     // Parallax effect for hero section
     let lastScroll = 0;
     window.addEventListener('scroll', () => {

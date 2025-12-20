@@ -1,0 +1,14 @@
+{
+  "laneId": "lane1",
+  "presetName": "default",
+  "transform": {
+    "translateX": 209,
+    "translateY": 0,
+    "scaleX": 1,
+    "scaleY": 1,
+    "rotation": 0,
+    "skewX": 0,
+    "skewY": 0
+  },
+  "createdAt": "2025-12-20T21:29:22.665Z"
+}

@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TRAXE - Throwing Axe Target</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <div id="loading-overlay">
+        <img id="loading-logo" src="../assets/Traxe_Logo.png" alt="TRAXE" />
+    </div>
+    <div id="app">
+        <div id="status">
+            <img id="traxe-logo" src="../assets/Traxe_Logo.png" alt="TRAXE" />
+        </div>
+        <div id="status-lights">
+            <div class="status-light-group">
+                <svg class="status-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <!-- Network/Server icon -->
+                    <rect x="2" y="3" width="20" height="4" rx="1"/>
+                    <rect x="2" y="10" width="20" height="4" rx="1"/>
+                    <rect x="2" y="17" width="20" height="4" rx="1"/>
+                </svg>
+                <div id="server-light" class="status-light"></div>
+            </div>
+            <div class="status-light-group">
+                <svg class="status-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <!-- Target/Tracker icon -->
+                    <circle cx="12" cy="12" r="10"/>
+                    <circle cx="12" cy="12" r="6"/>
+                    <circle cx="12" cy="12" r="2" fill="currentColor"/>
+                </svg>
+                <div id="tracker-light" class="status-light"></div>
+            </div>
+        </div>
+
+        <canvas id="target-canvas"></canvas>
+    </div>
+
+    <script src="main.js"></script>
+</body>
+</html>

@@ -1,0 +1,299 @@
+/* TRAXE User Classic Mode Styles */
+
+:root {
+    --bg0: #0a0a0a;
+    --bg1: #1a1a1a;
+    --panel: rgba(15, 15, 20, 0.85);
+    --text0: #ffffff;
+    --text1: #e0e0e0;
+    --text2: #b0b0b0;
+    --line: rgba(100, 50, 150, 0.3);
+    --accent: #7C3AED;
+    --accentGlow: #A78BFA;
+}
+
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    font-family: 'Space Grotesk', sans-serif;
+    background: linear-gradient(135deg, #1a1a1f 0%, #0f0f12 50%, #050508 100%);
+    color: var(--text0);
+    overflow: hidden;
+    position: relative;
+    width: 100vw;
+    height: 100vh;
+}
+
+body::before {
+    content: '';
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: radial-gradient(circle at center, transparent 40%, rgba(0,0,0,0.3) 100%);
+    pointer-events: none;
+    z-index: 1;
+}
+
+body::after {
+    content: '';
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-image:
+        radial-gradient(circle at 25% 25%, rgba(255,255,255,0.02) 1px, transparent 1px),
+        radial-gradient(circle at 75% 75%, rgba(255,255,255,0.02) 1px, transparent 1px),
+        radial-gradient(circle at 50% 50%, rgba(255,255,255,0.01) 2px, transparent 2px);
+    background-size: 100px 100px, 150px 150px, 200px 200px;
+    pointer-events: none;
+    z-index: 1;
+    opacity: 0.04;
+}
+
+#app {
+    width: 100vw;
+    height: 100vh;
+    position: relative;
+    z-index: 10;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 40px 20px;
+}
+
+#header {
+    text-align: center;
+    margin-bottom: 60px;
+    z-index: 100;
+}
+
+#traxe-logo {
+    height: 120px;
+    width: auto;
+    margin-bottom: 20px;
+    filter: drop-shadow(0 4px 8px rgba(0, 0, 0, 0.8));
+}
+
+#header h1 {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 48px;
+    font-weight: 400;
+    letter-spacing: 2px;
+    color: var(--text0);
+    text-shadow: 0 2px 4px rgba(0, 0, 0, 0.5);
+}
+
+#content {
+    max-width: 1200px;
+    width: 100%;
+    display: flex;
+    flex-direction: row;
+    align-items: flex-start;
+    justify-content: center;
+    gap: 40px;
+}
+
+#left-panel {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 30px;
+    flex: 1;
+    max-width: 400px;
+}
+
+#key-grid-container {
+    background: linear-gradient(135deg, rgba(26, 26, 31, 0.95) 0%, rgba(15, 15, 18, 0.95) 50%, rgba(5, 5, 8, 0.95) 100%);
+    border: 2px solid rgba(124, 58, 237, 0.3);
+    border-radius: 20px;
+    padding: 30px;
+    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.5);
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 20px;
+}
+
+#key-grid-container h3 {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 28px;
+    font-weight: 400;
+    letter-spacing: 2px;
+    color: var(--text0);
+    margin: 0;
+    text-align: center;
+}
+
+#key-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    grid-template-rows: repeat(3, 1fr);
+    gap: 12px;
+    width: 100%;
+    max-width: 250px;
+    aspect-ratio: 1;
+}
+
+.key-cell {
+    background: rgba(124, 58, 237, 0.2);
+    border: 2px solid rgba(124, 58, 237, 0.3);
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 32px;
+    font-weight: 400;
+    color: var(--accent);
+    cursor: pointer;
+    transition: all 0.2s ease;
+    user-select: none;
+}
+
+.key-cell:hover {
+    background: rgba(124, 58, 237, 0.3);
+    border-color: rgba(124, 58, 237, 0.5);
+    transform: scale(1.05);
+}
+
+.key-cell.key-pressed {
+    background: var(--accent);
+    color: var(--text0);
+    border-color: var(--accentGlow);
+    box-shadow: 0 0 20px rgba(124, 58, 237, 0.6);
+    transform: scale(0.95);
+}
+
+#key-grid-container .note {
+    font-size: 14px;
+    color: var(--text2);
+    font-style: italic;
+    text-align: center;
+    margin: 0;
+}
+
+#right-panel {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    flex: 1;
+    max-width: 400px;
+}
+
+#points-display-container {
+    background: linear-gradient(135deg, rgba(26, 26, 31, 0.95) 0%, rgba(15, 15, 18, 0.95) 50%, rgba(5, 5, 8, 0.95) 100%);
+    border: 2px solid rgba(124, 58, 237, 0.3);
+    border-radius: 20px;
+    padding: 40px;
+    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.5);
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 20px;
+}
+
+#points-display-container h3 {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 28px;
+    font-weight: 400;
+    letter-spacing: 2px;
+    color: var(--text0);
+    margin: 0;
+    text-align: center;
+}
+
+#points-display {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 120px;
+    font-weight: 400;
+    color: var(--accent);
+    text-align: center;
+    line-height: 1;
+    text-shadow: 0 0 30px rgba(124, 58, 237, 0.5);
+    transition: all 0.3s ease;
+    min-height: 140px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+#points-display.points-updated {
+    transform: scale(1.1);
+    color: var(--accentGlow);
+    text-shadow: 0 0 40px rgba(167, 139, 250, 0.8);
+}
+
+#back-button {
+    padding: 18px 40px;
+    background: linear-gradient(135deg, var(--accent) 0%, var(--accentGlow) 100%);
+    border: none;
+    border-radius: 12px;
+    color: var(--text0);
+    font-family: 'Space Grotesk', sans-serif;
+    font-size: 18px;
+    font-weight: 600;
+    letter-spacing: 1px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    text-transform: uppercase;
+    box-shadow: 0 4px 15px rgba(124, 58, 237, 0.4);
+}
+
+#back-button:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgba(124, 58, 237, 0.6);
+}
+
+#back-button:active {
+    transform: translateY(0);
+}
+
+/* Responsive design */
+@media (max-width: 768px) {
+    #traxe-logo {
+        height: 80px;
+    }
+
+    #header h1 {
+        font-size: 32px;
+    }
+
+    #content {
+        flex-direction: column;
+        max-width: 100%;
+    }
+
+    #left-panel,
+    #right-panel {
+        max-width: 100%;
+        width: 100%;
+    }
+
+    #points-display {
+        font-size: 80px;
+        min-height: 100px;
+    }
+
+    #key-grid {
+        max-width: 200px;
+    }
+
+    .key-cell {
+        font-size: 24px;
+    }
+}
+

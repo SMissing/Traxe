@@ -1,0 +1,290 @@
+/* TRAXE Projector Styles */
+
+/* Google Fonts */
+@import url('https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Space+Grotesk:wght@400;500;600;700&display=swap');
+
+:root {
+    --bg0: #0a0a0a;
+    --bg1: #1a1a1a;
+    --panel: rgba(15, 15, 20, 0.85);
+    --text0: #ffffff;
+    --text1: #e0e0e0;
+    --line: rgba(100, 50, 150, 0.3);
+    --accent: #8a2be2;
+    --accentGlow: rgba(138, 43, 226, 0.2);
+}
+
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    font-family: 'Space Grotesk', sans-serif;
+    background: linear-gradient(135deg, #1a1a1f 0%, #0f0f12 50%, #050508 100%);
+    background-color: var(--bg0); /* Fallback color */
+    color: var(--text0);
+    overflow: hidden;
+    cursor: none; /* Hide cursor for projector mode */
+    position: relative;
+}
+
+body::before {
+    content: '';
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: radial-gradient(circle at center, transparent 40%, rgba(0,0,0,0.3) 100%);
+    pointer-events: none;
+    z-index: 1;
+}
+
+body::after {
+    content: '';
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-image:
+        radial-gradient(circle at 25% 25%, rgba(255,255,255,0.02) 1px, transparent 1px),
+        radial-gradient(circle at 75% 75%, rgba(255,255,255,0.02) 1px, transparent 1px),
+        radial-gradient(circle at 50% 50%, rgba(255,255,255,0.01) 2px, transparent 2px);
+    background-size: 100px 100px, 150px 150px, 200px 200px;
+    pointer-events: none;
+    z-index: 1;
+}
+
+#loading-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    background: linear-gradient(135deg, #1a1a1f 0%, #0f0f12 50%, #050508 100%);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 10000;
+    transition: opacity 0.5s ease-out, visibility 0.5s ease-out;
+}
+
+#loading-overlay::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: radial-gradient(circle at center, transparent 40%, rgba(0,0,0,0.3) 100%);
+    pointer-events: none;
+}
+
+#loading-overlay::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-image:
+        radial-gradient(circle at 25% 25%, rgba(255,255,255,0.02) 1px, transparent 1px),
+        radial-gradient(circle at 75% 75%, rgba(255,255,255,0.02) 1px, transparent 1px),
+        radial-gradient(circle at 50% 50%, rgba(255,255,255,0.01) 2px, transparent 2px);
+    background-size: 100px 100px, 150px 150px, 200px 200px;
+    pointer-events: none;
+    opacity: 0.04;
+}
+
+#loading-overlay.hidden {
+    opacity: 0;
+    visibility: hidden;
+    pointer-events: none;
+}
+
+#loading-logo {
+    height: 200px;
+    width: auto;
+    position: relative;
+    z-index: 1;
+    filter: drop-shadow(0 4px 8px rgba(0, 0, 0, 0.8));
+}
+
+#app {
+    width: 100vw;
+    height: 100vh;
+    position: relative;
+    z-index: 10;
+    overflow: hidden; /* Prevent dead space from showing during shake */
+}
+
+#status {
+    position: absolute;
+    left: 50%;
+    transform: translateX(-50%);
+    z-index: 1000;
+    background: transparent;
+    padding: 0;
+    border: none;
+    box-shadow: none;
+    backdrop-filter: none;
+    -webkit-backdrop-filter: none;
+}
+
+#traxe-logo {
+    width: auto;
+    display: block;
+    filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.6));
+}
+
+#status-lights {
+    position: absolute;
+    bottom: 20px;
+    left: 20px;
+    z-index: 1000;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.status-light-group {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.status-icon {
+    width: 18px;
+    height: 18px;
+    color: var(--text1);
+    opacity: 0.8;
+    flex-shrink: 0;
+}
+
+.status-light {
+    width: 16px;
+    height: 16px;
+    border-radius: 50%;
+    background: #2a2a2f;
+    border: 2px solid #1a1a1f;
+    box-shadow: 
+        inset 0 1px 2px rgba(0, 0, 0, 0.8),
+        inset 0 -1px 1px rgba(255, 255, 255, 0.1),
+        0 0 0 1px rgba(0, 0, 0, 0.5);
+    position: relative;
+    transition: all 0.3s ease;
+}
+
+.status-light::before {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: #1a1a1f;
+    transition: all 0.3s ease;
+}
+
+/* Light states */
+.status-light.light-off::before {
+    background: #1a1a1f;
+    box-shadow: none;
+}
+
+.status-light.light-red::before {
+    background: #d4776b;
+    box-shadow: 0 0 8px rgba(212, 119, 107, 0.6), 0 0 12px rgba(212, 119, 107, 0.3);
+}
+
+.status-light.light-yellow::before {
+    background: #d4a66b;
+    box-shadow: 0 0 8px rgba(212, 166, 107, 0.6), 0 0 12px rgba(212, 166, 107, 0.3);
+}
+
+.status-light.light-green::before {
+    background: #5dd4a6;
+    box-shadow: 0 0 8px rgba(93, 212, 166, 0.6), 0 0 12px rgba(93, 212, 166, 0.3);
+}
+
+
+#target-canvas {
+    width: 100vw;
+    height: 100vh;
+    display: block;
+    background: transparent;
+    position: relative;
+    /* Transform origin for shake effect */
+    transform-origin: center center;
+}
+
+#markers {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    pointer-events: none;
+}
+
+/* Responsive design */
+@media (max-width: 768px) {
+    #status {
+        transform: translateX(-50%);
+    }
+
+    #traxe-logo {
+        /* Height will be set dynamically by JavaScript */
+    }
+
+    #status-lights {
+        bottom: 10px;
+        left: 10px;
+        gap: 8px;
+    }
+
+    .status-icon {
+        width: 16px;
+        height: 16px;
+    }
+
+    .status-light {
+        width: 14px;
+        height: 14px;
+    }
+
+    .status-light::before {
+        width: 7px;
+        height: 7px;
+    }
+
+    #loading-logo {
+        height: 120px;
+    }
+}
+
+/* Fullscreen styles */
+:-webkit-fullscreen {
+    background: linear-gradient(135deg, #1a1a1f 0%, #0f0f12 50%, #050508 100%);
+    background-color: var(--bg0);
+}
+
+:-moz-full-screen {
+    background: linear-gradient(135deg, #1a1a1f 0%, #0f0f12 50%, #050508 100%);
+    background-color: var(--bg0);
+}
+
+:-ms-fullscreen {
+    background: linear-gradient(135deg, #1a1a1f 0%, #0f0f12 50%, #050508 100%);
+    background-color: var(--bg0);
+}
+
+:fullscreen {
+    background: linear-gradient(135deg, #1a1a1f 0%, #0f0f12 50%, #050508 100%);
+    background-color: var(--bg0);
+}
