@@ -211,6 +211,7 @@ class UserPairing {
                 }
                 
                 this.showPairedUI();
+                this.reportLocation(); // Report initial location after pairing
             }
         });
         
@@ -221,6 +222,7 @@ class UserPairing {
             this.laneId = laneId;
             this.laneState = state;
             this.showPairedUI();
+            this.reportLocation(); // Report current location after rejoin
         });
         
         this.socket.on('client:autoRejoin:failed', ({ message }) => {
@@ -372,6 +374,29 @@ class UserPairing {
     
     updateLaneInfo() {
         // Lane info removed - not needed on user page
+    }
+    
+    reportLocation() {
+        if (!this.socket || !this.socket.connected || !this.paired) {
+            return;
+        }
+        
+        // Determine location from current URL
+        const path = window.location.pathname;
+        let location = 'pairing';
+        
+        if (path === '/user') {
+            location = 'choosing';
+        } else if (path.startsWith('/user/')) {
+            // Extract game mode from path (e.g., /user/classic -> "Classic")
+            const mode = path.split('/')[2];
+            if (mode) {
+                // Capitalize first letter and format
+                location = mode.charAt(0).toUpperCase() + mode.slice(1).replace(/-/g, ' ');
+            }
+        }
+        
+        this.socket.emit('client:location:update', { location });
     }
 }
 

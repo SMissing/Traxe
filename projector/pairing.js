@@ -213,6 +213,7 @@ class ProjectorPairing {
                 }
                 
                 this.showPairedUI();
+                this.reportLocation(); // Report initial location after pairing
             }
         });
         
@@ -223,6 +224,7 @@ class ProjectorPairing {
             this.laneId = laneId;
             this.laneState = state;
             this.showPairedUI();
+            this.reportLocation(); // Report current location after rejoin
         });
         
         this.socket.on('client:autoRejoin:failed', ({ message }) => {
@@ -347,6 +349,29 @@ class ProjectorPairing {
             const inSession = this.laneState.inSession ? 'In Session' : 'Ready';
             infoEl.textContent = `${this.laneState.laneId} • ${mode} • ${inSession}`;
         }
+    }
+    
+    reportLocation() {
+        if (!this.socket || !this.socket.connected || !this.paired) {
+            return;
+        }
+        
+        // Determine location from current URL
+        const path = window.location.pathname;
+        let location = 'pairing';
+        
+        if (path === '/projector') {
+            location = 'main';
+        } else if (path.startsWith('/projector/')) {
+            // Extract game mode from path (e.g., /projector/classic -> "Classic")
+            const mode = path.split('/')[2];
+            if (mode) {
+                // Capitalize first letter and format
+                location = mode.charAt(0).toUpperCase() + mode.slice(1).replace(/-/g, ' ');
+            }
+        }
+        
+        this.socket.emit('client:location:update', { location });
     }
 }
 

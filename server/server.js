@@ -314,22 +314,38 @@ const io = new Server(server, {
 
 // In-memory state storage
 const DEFAULT_VENUE_ID = "venue_default";
-const DEFAULT_LANE_ID = "lane_1";
+const DEFAULT_LANE_ID = "Alpha";
 
-// Lane state: { laneId: { laneId, venueId, pairingCode, closed, pairedDevices: { user, projector }, inSession, gameMode, updatedAt } }
+// Predefined lanes (NATO phonetic alphabet)
+const PREDEFINED_LANES = ['Alpha', 'Bravo'];
+
+// Lane state: { laneId: { laneId, venueId, pairingCode, closed, pairedDevices: { user, projector }, deviceLocations: { user, projector }, inSession, gameMode, updatedAt } }
 const laneStates = new Map();
 
 // Device lock-ins: { deviceId: { laneId, venueId, code, lockedUntil } }
 // deviceId is a combination of clientType + browser fingerprint (handled client-side)
 const deviceLockIns = new Map();
 
-// Initialize default lane state
-laneStates.set(DEFAULT_LANE_ID, {
-  laneId: DEFAULT_LANE_ID,
+// Initialize default lane states (NATO phonetic alphabet)
+laneStates.set('Alpha', {
+  laneId: 'Alpha',
   venueId: DEFAULT_VENUE_ID,
   pairingCode: null,
   closed: false,
   pairedDevices: { user: false, projector: false },
+  deviceLocations: { user: null, projector: null },
+  inSession: false,
+  gameMode: null,
+  updatedAt: Date.now()
+});
+
+laneStates.set('Bravo', {
+  laneId: 'Bravo',
+  venueId: DEFAULT_VENUE_ID,
+  pairingCode: null,
+  closed: false,
+  pairedDevices: { user: false, projector: false },
+  deviceLocations: { user: null, projector: null },
   inSession: false,
   gameMode: null,
   updatedAt: Date.now()
@@ -363,8 +379,13 @@ function broadcastLaneState(venueId, laneId) {
   const laneRoom = getLaneRoom(venueId, laneId);
   const adminsRoom = getAdminsRoom(venueId);
 
+  // Always broadcast to lane room (clients need updates)
   io.to(laneRoom).emit('lane:state:update', state);
-  io.to(adminsRoom).emit('lane:state:update', state);
+  
+  // Only broadcast to admins if it's a predefined lane
+  if (PREDEFINED_LANES.includes(laneId)) {
+    io.to(adminsRoom).emit('lane:state:update', state);
+  }
 }
 
 // Clean up expired device lock-ins periodically
@@ -393,8 +414,9 @@ io.on('connection', (socket) => {
     socket.join(adminsRoom);
     console.log(`[${new Date().toISOString()}] Admin ${socket.id} watching venue ${venueId}`);
 
-    // Send current lane list and states
-    const lanes = Array.from(laneStates.values()).filter(lane => lane.venueId === venueId);
+    // Send current lane list and states (only predefined lanes)
+    const lanes = Array.from(laneStates.values())
+      .filter(lane => lane.venueId === venueId && PREDEFINED_LANES.includes(lane.laneId));
     socket.emit('admin:venue:lanes', { venueId, lanes });
   });
 
@@ -402,6 +424,12 @@ io.on('connection', (socket) => {
   socket.on('admin:pairCode:create', ({ venueId, laneId }) => {
     if (!venueId || !laneId) {
       socket.emit('error', { message: 'venueId and laneId required' });
+      return;
+    }
+
+    // Only allow predefined lanes
+    if (!PREDEFINED_LANES.includes(laneId)) {
+      socket.emit('error', { message: `Lane ${laneId} is not a valid lane. Valid lanes: ${PREDEFINED_LANES.join(', ')}` });
       return;
     }
 
@@ -414,6 +442,7 @@ io.on('connection', (socket) => {
         pairingCode: null,
         closed: false,
         pairedDevices: { user: false, projector: false },
+        deviceLocations: { user: null, projector: null },
         inSession: false,
         gameMode: null,
         updatedAt: Date.now()
@@ -456,14 +485,6 @@ io.on('connection', (socket) => {
       return;
     }
 
-    // Close the lane
-    state.closed = true;
-    state.pairingCode = null;
-    state.pairedDevices = { user: false, projector: false };
-    state.inSession = false;
-    state.gameMode = null;
-    state.updatedAt = Date.now();
-
     // Clear all device lock-ins for this lane
     for (const [deviceId, lockIn] of deviceLockIns.entries()) {
       if (lockIn.laneId === laneId) {
@@ -471,14 +492,42 @@ io.on('connection', (socket) => {
       }
     }
 
+    // Set closed state briefly, then reset to default
+    state.closed = true;
+    state.pairingCode = null;
+    state.pairedDevices = { user: false, projector: false };
+    state.deviceLocations = { user: null, projector: null };
+    state.inSession = false;
+    state.gameMode = null;
+    state.updatedAt = Date.now();
+
     console.log(`[${new Date().toISOString()}] Lane ${laneId} closed`);
 
-    // Broadcast updated state
+    // Broadcast updated state (with closed=true)
     broadcastLaneState(venueId, laneId);
     
     // Notify all clients in the lane room
     const laneRoom = getLaneRoom(venueId, laneId);
     io.to(laneRoom).emit('lane:closed');
+
+    // After 1.5 seconds, reset to default state (ready for new code)
+    setTimeout(() => {
+      const currentState = laneStates.get(laneId);
+      if (currentState) {
+        currentState.closed = false;
+        currentState.pairingCode = null;
+        currentState.pairedDevices = { user: false, projector: false };
+        currentState.deviceLocations = { user: null, projector: null };
+        currentState.inSession = false;
+        currentState.gameMode = null;
+        currentState.updatedAt = Date.now();
+        
+        console.log(`[${new Date().toISOString()}] Lane ${laneId} reset to default state`);
+        
+        // Broadcast updated state (back to default)
+        broadcastLaneState(venueId, laneId);
+      }
+    }, 1500);
   });
 
   // Admin: Start lane session
@@ -551,6 +600,11 @@ io.on('connection', (socket) => {
 
     // Mark device as paired
     targetLane.pairedDevices[clientType] = true;
+    // Set initial location to "pairing" (will be updated when they navigate)
+    if (!targetLane.deviceLocations) {
+      targetLane.deviceLocations = { user: null, projector: null };
+    }
+    targetLane.deviceLocations[clientType] = 'pairing';
     targetLane.updatedAt = Date.now();
 
     // Join lane room
@@ -598,6 +652,11 @@ io.on('connection', (socket) => {
 
     // Auto-rejoin successful
     state.pairedDevices[clientType] = true;
+    // Determine location from current URL (will be updated by client)
+    if (!state.deviceLocations) {
+      state.deviceLocations = { user: null, projector: null };
+    }
+    // Location will be updated by client when it reports
     state.updatedAt = Date.now();
 
     const laneRoom = getLaneRoom(lockIn.venueId, lockIn.laneId);
@@ -616,6 +675,32 @@ io.on('connection', (socket) => {
     });
 
     broadcastLaneState(lockIn.venueId, lockIn.laneId);
+  });
+
+  // Client: Update device location
+  socket.on('client:location:update', ({ location }) => {
+    if (!socket.data.laneId || !socket.data.clientType) {
+      return; // Not paired yet
+    }
+
+    const state = laneStates.get(socket.data.laneId);
+    if (state) {
+      if (!state.deviceLocations) {
+        state.deviceLocations = { user: null, projector: null };
+      }
+      state.deviceLocations[socket.data.clientType] = location;
+      
+      // If user location is a game mode (not "choosing", "pairing", or "main"), update gameMode
+      if (socket.data.clientType === 'user' && location && 
+          location !== 'choosing' && location !== 'pairing' && location !== 'main') {
+        state.gameMode = location;
+        state.inSession = true;
+      }
+      
+      state.updatedAt = Date.now();
+      broadcastLaneState(socket.data.venueId, socket.data.laneId);
+      console.log(`[${new Date().toISOString()}] ${socket.data.clientType} location updated to: ${location}`);
+    }
   });
 
   // Get lane state
@@ -642,6 +727,9 @@ io.on('connection', (socket) => {
       const state = laneStates.get(socket.data.laneId);
       if (state) {
         state.pairedDevices[socket.data.clientType] = false;
+        if (state.deviceLocations) {
+          state.deviceLocations[socket.data.clientType] = null;
+        }
         state.updatedAt = Date.now();
         broadcastLaneState(socket.data.venueId, socket.data.laneId);
         console.log(`[${new Date().toISOString()}] ${socket.data.clientType} disconnected from lane ${socket.data.laneId} (lock-in preserved)`);
