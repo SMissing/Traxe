@@ -8,7 +8,39 @@
     <link rel="stylesheet" href="styles.css">
 </head>
 <body>
-    <div id="app">
+    <!-- Timer -->
+    <div id="timer" class="timer">00:00</div>
+    
+    <!-- Pairing Screen -->
+    <div id="pairing-screen" class="pairing-screen">
+        <div class="pairing-container">
+            <img id="traxe-logo-pairing" src="/projector/assets/Traxe_Logo.png" alt="TRAXE" />
+            <h1>Enter Pair Code</h1>
+            <p class="pairing-subtitle">Get the code from the admin dashboard</p>
+            
+            <div class="pairing-input-container">
+                <input 
+                    type="text" 
+                    id="pair-code-input" 
+                    class="pair-code-input" 
+                    placeholder="Enter 4-digit code"
+                    maxlength="4"
+                    autocomplete="off"
+                    autofocus
+                />
+            </div>
+            
+            <div id="projector-status" class="projector-status unavailable">Checking for projector...</div>
+            
+            <button id="pair-submit-btn" class="btn-pair">Connect</button>
+            
+            <div id="pairing-status" class="pairing-status"></div>
+            <div id="connection-status" class="connection-status"></div>
+        </div>
+    </div>
+    
+    <!-- Main App (shown after pairing) -->
+    <div id="app" class="hidden">
         <div id="header">
             <img id="traxe-logo" src="/projector/assets/Traxe_Logo.png" alt="TRAXE" />
             <h1>Game Modes</h1>
@@ -25,6 +57,8 @@
         </div>
     </div>
 
+    <script src="/socket.io/socket.io.js"></script>
+    <script src="pairing.js"></script>
     <script src="main.js"></script>
 </body>
 </html>

@@ -1,6 +1,7 @@
 const express = require('express');
 const http = require('http');
 const WebSocket = require('ws');
+const { Server } = require('socket.io');
 const path = require('path');
 const fs = require('fs').promises;
 
@@ -92,7 +93,15 @@ app.get('/api/presets/:laneId/:presetName', async (req, res) => {
 });
 
 // WebSocket server
-const wss = new WebSocket.Server({ server });
+// Configure to ignore Socket.IO paths (Socket.IO handles its own upgrades)
+const wss = new WebSocket.Server({ 
+  server,
+  verifyClient: (info) => {
+    // Only handle /tracker and /ws paths, let Socket.IO handle /socket.io/*
+    const path = info.req.url;
+    return path === '/tracker' || path === '/ws';
+  }
+});
 
 // Track connections by type
 const trackerConnections = new Set();
@@ -280,8 +289,10 @@ wss.on('connection', (ws, req) => {
     });
 
   } else {
-    // Unknown endpoint
-    console.log(`[${new Date().toISOString()}] Unknown connection attempt to ${url}`);
+    // Unknown endpoint (shouldn't reach here due to verifyClient, but handle gracefully)
+    if (!url.startsWith('/socket.io/')) {
+      console.log(`[${new Date().toISOString()}] Unknown connection attempt to ${url}`);
+    }
     ws.close();
   }
 
@@ -290,10 +301,360 @@ wss.on('connection', (ws, req) => {
   });
 });
 
+// ============================================================================
+// Socket.IO Server for Pairing System
+// ============================================================================
+
+const io = new Server(server, {
+  cors: {
+    origin: "*",
+    methods: ["GET", "POST"]
+  }
+});
+
+// In-memory state storage
+const DEFAULT_VENUE_ID = "venue_default";
+const DEFAULT_LANE_ID = "lane_1";
+
+// Lane state: { laneId: { laneId, venueId, pairingCode, closed, pairedDevices: { user, projector }, inSession, gameMode, updatedAt } }
+const laneStates = new Map();
+
+// Device lock-ins: { deviceId: { laneId, venueId, code, lockedUntil } }
+// deviceId is a combination of clientType + browser fingerprint (handled client-side)
+const deviceLockIns = new Map();
+
+// Initialize default lane state
+laneStates.set(DEFAULT_LANE_ID, {
+  laneId: DEFAULT_LANE_ID,
+  venueId: DEFAULT_VENUE_ID,
+  pairingCode: null,
+  closed: false,
+  pairedDevices: { user: false, projector: false },
+  inSession: false,
+  gameMode: null,
+  updatedAt: Date.now()
+});
+
+// Generate a random 4-character pairing code (letters + digits)
+function generatePairingCode() {
+  const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789'; // Exclude confusing chars like 0, O, I, 1
+  let code = '';
+  for (let i = 0; i < 4; i++) {
+    code += chars.charAt(Math.floor(Math.random() * chars.length));
+  }
+  return code;
+}
+
+// Get room name for a lane
+function getLaneRoom(venueId, laneId) {
+  return `venue:${venueId}:lane:${laneId}`;
+}
+
+// Get room name for admins watching a venue
+function getAdminsRoom(venueId) {
+  return `venue:${venueId}:admins`;
+}
+
+// Broadcast lane state to lane room and admins room
+function broadcastLaneState(venueId, laneId) {
+  const state = laneStates.get(laneId);
+  if (!state) return;
+
+  const laneRoom = getLaneRoom(venueId, laneId);
+  const adminsRoom = getAdminsRoom(venueId);
+
+  io.to(laneRoom).emit('lane:state:update', state);
+  io.to(adminsRoom).emit('lane:state:update', state);
+}
+
+// Clean up expired device lock-ins periodically
+setInterval(() => {
+  const now = Date.now();
+  for (const [deviceId, lockIn] of deviceLockIns.entries()) {
+    if (now > lockIn.lockedUntil) {
+      deviceLockIns.delete(deviceId);
+      console.log(`[${new Date().toISOString()}] Device lock-in expired for ${deviceId}`);
+    }
+  }
+}, 60000); // Check every minute
+
+// Socket.IO connection handling
+io.on('connection', (socket) => {
+  console.log(`[${new Date().toISOString()}] Socket.IO client connected: ${socket.id}`);
+
+  // Admin: Watch venue
+  socket.on('admin:venue:watch', ({ venueId }) => {
+    if (!venueId) {
+      socket.emit('error', { message: 'venueId required' });
+      return;
+    }
+
+    const adminsRoom = getAdminsRoom(venueId);
+    socket.join(adminsRoom);
+    console.log(`[${new Date().toISOString()}] Admin ${socket.id} watching venue ${venueId}`);
+
+    // Send current lane list and states
+    const lanes = Array.from(laneStates.values()).filter(lane => lane.venueId === venueId);
+    socket.emit('admin:venue:lanes', { venueId, lanes });
+  });
+
+  // Admin: Create pairing code (or regenerate if exists)
+  socket.on('admin:pairCode:create', ({ venueId, laneId }) => {
+    if (!venueId || !laneId) {
+      socket.emit('error', { message: 'venueId and laneId required' });
+      return;
+    }
+
+    // Get or create lane state
+    let state = laneStates.get(laneId);
+    if (!state) {
+      state = {
+        laneId,
+        venueId,
+        pairingCode: null,
+        closed: false,
+        pairedDevices: { user: false, projector: false },
+        inSession: false,
+        gameMode: null,
+        updatedAt: Date.now()
+      };
+      laneStates.set(laneId, state);
+    }
+
+    // Generate new code (regenerate if already exists)
+    let code;
+    do {
+      code = generatePairingCode();
+    } while (code === state.pairingCode && state.pairingCode !== null); // Ensure it's different
+
+    state.pairingCode = code;
+    state.closed = false;
+    state.updatedAt = Date.now();
+
+    console.log(`[${new Date().toISOString()}] Pairing code ${code} created for ${venueId}/${laneId}`);
+
+    socket.emit('admin:pairCode:created', {
+      code,
+      laneId,
+      venueId
+    });
+
+    // Broadcast updated lane state
+    broadcastLaneState(venueId, laneId);
+  });
+
+  // Admin: Close lane (invalidates code and clears lock-ins)
+  socket.on('admin:lane:close', ({ venueId, laneId }) => {
+    if (!venueId || !laneId) {
+      socket.emit('error', { message: 'venueId and laneId required' });
+      return;
+    }
+
+    const state = laneStates.get(laneId);
+    if (!state) {
+      socket.emit('error', { message: 'Lane not found' });
+      return;
+    }
+
+    // Close the lane
+    state.closed = true;
+    state.pairingCode = null;
+    state.pairedDevices = { user: false, projector: false };
+    state.inSession = false;
+    state.gameMode = null;
+    state.updatedAt = Date.now();
+
+    // Clear all device lock-ins for this lane
+    for (const [deviceId, lockIn] of deviceLockIns.entries()) {
+      if (lockIn.laneId === laneId) {
+        deviceLockIns.delete(deviceId);
+      }
+    }
+
+    console.log(`[${new Date().toISOString()}] Lane ${laneId} closed`);
+
+    // Broadcast updated state
+    broadcastLaneState(venueId, laneId);
+    
+    // Notify all clients in the lane room
+    const laneRoom = getLaneRoom(venueId, laneId);
+    io.to(laneRoom).emit('lane:closed');
+  });
+
+  // Admin: Start lane session
+  socket.on('admin:lane:start', ({ venueId, laneId, gameMode }) => {
+    if (!venueId || !laneId) {
+      socket.emit('error', { message: 'venueId and laneId required' });
+      return;
+    }
+
+    const state = laneStates.get(laneId);
+    if (!state) {
+      socket.emit('error', { message: 'Lane not found' });
+      return;
+    }
+
+    // Update state
+    state.inSession = true;
+    state.gameMode = gameMode || 'Classic';
+    state.updatedAt = Date.now();
+
+    console.log(`[${new Date().toISOString()}] Lane ${laneId} started with mode ${state.gameMode}`);
+
+    // Broadcast updated state
+    broadcastLaneState(venueId, laneId);
+  });
+
+  // Client: Join with pairing code
+  socket.on('client:pairCode:join', ({ code, clientType, deviceId }) => {
+    if (!code || !clientType) {
+      socket.emit('error', { message: 'code and clientType required' });
+      return;
+    }
+
+    if (clientType !== 'user' && clientType !== 'projector') {
+      socket.emit('error', { message: 'clientType must be "user" or "projector"' });
+      return;
+    }
+
+    // Find lane with this code
+    let targetLane = null;
+    for (const [laneId, state] of laneStates.entries()) {
+      if (state.pairingCode === code.toUpperCase() && !state.closed) {
+        targetLane = state;
+        break;
+      }
+    }
+
+    if (!targetLane) {
+      socket.emit('client:pairCode:error', { message: 'Invalid or closed pairing code' });
+      return;
+    }
+
+    // Check if device is already locked in (within 60 minutes)
+    if (deviceId) {
+      const lockIn = deviceLockIns.get(deviceId);
+      if (lockIn && lockIn.laneId === targetLane.laneId && Date.now() < lockIn.lockedUntil) {
+        // Device is still locked in, allow auto-rejoin
+        console.log(`[${new Date().toISOString()}] ${clientType} ${socket.id} auto-rejoined lane ${targetLane.laneId} (locked in)`);
+      } else {
+        // New pairing - create 60-minute lock-in
+        deviceLockIns.set(deviceId, {
+          laneId: targetLane.laneId,
+          venueId: targetLane.venueId,
+          code: code.toUpperCase(),
+          lockedUntil: Date.now() + (60 * 60 * 1000) // 60 minutes
+        });
+        console.log(`[${new Date().toISOString()}] ${clientType} ${socket.id} locked in to lane ${targetLane.laneId} for 60 minutes`);
+      }
+    }
+
+    // Mark device as paired
+    targetLane.pairedDevices[clientType] = true;
+    targetLane.updatedAt = Date.now();
+
+    // Join lane room
+    const laneRoom = getLaneRoom(targetLane.venueId, targetLane.laneId);
+    socket.join(laneRoom);
+    socket.data.laneId = targetLane.laneId;
+    socket.data.venueId = targetLane.venueId;
+    socket.data.clientType = clientType;
+    socket.data.deviceId = deviceId;
+
+    console.log(`[${new Date().toISOString()}] ${clientType} ${socket.id} joined lane ${targetLane.laneId} with code ${code}`);
+
+    // Send success response
+    socket.emit('client:pairCode:joined', {
+      ok: true,
+      venueId: targetLane.venueId,
+      laneId: targetLane.laneId,
+      state: targetLane
+    });
+
+    // Broadcast updated state
+    broadcastLaneState(targetLane.venueId, targetLane.laneId);
+  });
+
+  // Client: Auto-rejoin (check if device is locked in)
+  socket.on('client:autoRejoin', ({ deviceId, clientType }) => {
+    if (!deviceId || !clientType) {
+      socket.emit('error', { message: 'deviceId and clientType required' });
+      return;
+    }
+
+    const lockIn = deviceLockIns.get(deviceId);
+    if (!lockIn || Date.now() >= lockIn.lockedUntil) {
+      socket.emit('client:autoRejoin:failed', { message: 'No valid lock-in found' });
+      return;
+    }
+
+    const state = laneStates.get(lockIn.laneId);
+    if (!state || state.closed || state.pairingCode !== lockIn.code) {
+      // Lane was closed or code changed
+      deviceLockIns.delete(deviceId);
+      socket.emit('client:autoRejoin:failed', { message: 'Lane closed or code changed' });
+      return;
+    }
+
+    // Auto-rejoin successful
+    state.pairedDevices[clientType] = true;
+    state.updatedAt = Date.now();
+
+    const laneRoom = getLaneRoom(lockIn.venueId, lockIn.laneId);
+    socket.join(laneRoom);
+    socket.data.laneId = lockIn.laneId;
+    socket.data.venueId = lockIn.venueId;
+    socket.data.clientType = clientType;
+    socket.data.deviceId = deviceId;
+
+    console.log(`[${new Date().toISOString()}] ${clientType} ${socket.id} auto-rejoined lane ${lockIn.laneId}`);
+
+    socket.emit('client:autoRejoin:success', {
+      venueId: lockIn.venueId,
+      laneId: lockIn.laneId,
+      state
+    });
+
+    broadcastLaneState(lockIn.venueId, lockIn.laneId);
+  });
+
+  // Get lane state
+  socket.on('lane:state:get', ({ venueId, laneId }) => {
+    if (!venueId || !laneId) {
+      socket.emit('error', { message: 'venueId and laneId required' });
+      return;
+    }
+
+    const state = laneStates.get(laneId);
+    if (state && state.venueId === venueId) {
+      socket.emit('lane:state', state);
+    } else {
+      socket.emit('error', { message: 'Lane not found' });
+    }
+  });
+
+  // Handle disconnection
+  socket.on('disconnect', () => {
+    console.log(`[${new Date().toISOString()}] Socket.IO client disconnected: ${socket.id}`);
+
+    // If this was a paired device, mark it as unpaired (but keep lock-in for auto-rejoin)
+    if (socket.data.laneId && socket.data.clientType) {
+      const state = laneStates.get(socket.data.laneId);
+      if (state) {
+        state.pairedDevices[socket.data.clientType] = false;
+        state.updatedAt = Date.now();
+        broadcastLaneState(socket.data.venueId, socket.data.laneId);
+        console.log(`[${new Date().toISOString()}] ${socket.data.clientType} disconnected from lane ${socket.data.laneId} (lock-in preserved)`);
+      }
+    }
+  });
+});
+
 // Periodic status logging
 setInterval(() => {
   const now = new Date().toISOString();
   console.log(`[${now}] Status: ${trackerConnections.size} trackers, ${clientConnections.size} clients, ${eventsPerSecond} events/sec`);
+  console.log(`[${now}] Socket.IO: ${io.sockets.sockets.size} connected, ${deviceLockIns.size} active device lock-ins`);
 }, 10000);
 
 // Graceful shutdown
@@ -311,8 +672,10 @@ server.listen(PORT, '0.0.0.0', () => {
   console.log(`Health check: http://localhost:${PORT}/health`);
   console.log(`Tracker WebSocket: ws://localhost:${PORT}/tracker`);
   console.log(`Client WebSocket: ws://localhost:${PORT}/ws`);
+  console.log(`Socket.IO: http://localhost:${PORT} (for pairing system)`);
   console.log(`User interface: http://localhost:${PORT}/user`);
+  console.log(`Admin dashboard: http://localhost:${PORT}/admin`);
   console.log(`Admin calibration: http://localhost:${PORT}/admin/utils`);
+  console.log(`Projector: http://localhost:${PORT}/projector`);
   console.log(`Projector classic mode: http://localhost:${PORT}/projector/classic`);
-  console.log(`Projector frontend: http://localhost:${PORT}/projector`);
 });

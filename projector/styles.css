@@ -20,6 +20,19 @@
     box-sizing: border-box;
 }
 
+/* Timer */
+.timer {
+    position: fixed;
+    top: 1rem;
+    right: 1rem;
+    font-family: 'Space Grotesk', sans-serif;
+    font-size: 0.875rem;
+    color: #6b7280;
+    z-index: 10000;
+    pointer-events: none;
+    user-select: none;
+}
+
 body {
     font-family: 'Space Grotesk', sans-serif;
     background: linear-gradient(135deg, #1a1a1f 0%, #0f0f12 50%, #050508 100%);
@@ -114,6 +127,141 @@ body::after {
     filter: drop-shadow(0 4px 8px rgba(0, 0, 0, 0.8));
 }
 
+/* Pairing Screen */
+.pairing-screen {
+    width: 100vw;
+    height: 100vh;
+    position: fixed;
+    top: 0;
+    left: 0;
+    z-index: 2000;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: linear-gradient(135deg, #1a1a1f 0%, #0f0f12 50%, #050508 100%);
+}
+
+.pairing-screen.hidden {
+    display: none;
+}
+
+.pairing-container {
+    text-align: center;
+    z-index: 2001;
+    padding: 2rem;
+}
+
+#traxe-logo-pairing {
+    height: 200px;
+    width: auto;
+    margin-bottom: 2rem;
+    filter: drop-shadow(0 4px 8px rgba(0, 0, 0, 0.8));
+}
+
+.pairing-container h1 {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 4rem;
+    font-weight: 400;
+    letter-spacing: 2px;
+    color: var(--text0);
+    margin-bottom: 0.5rem;
+}
+
+.pairing-subtitle {
+    color: var(--text1);
+    font-size: 1.5rem;
+    margin-bottom: 3rem;
+}
+
+.pairing-input-container {
+    margin: 3rem 0;
+}
+
+.pair-code-input {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 4rem;
+    letter-spacing: 0.5rem;
+    text-align: center;
+    width: 400px;
+    padding: 2rem;
+    background: var(--bg1);
+    border: 2px solid var(--line);
+    border-radius: 12px;
+    color: var(--accent);
+    text-transform: uppercase;
+    transition: all 0.2s;
+}
+
+.pair-code-input:focus {
+    outline: none;
+    border-color: var(--accent);
+    box-shadow: 0 0 30px rgba(124, 58, 237, 0.4);
+}
+
+.btn-pair {
+    padding: 1.5rem 4rem;
+    background: linear-gradient(135deg, #7C3AED 0%, #A78BFA 100%);
+    border: none;
+    border-radius: 8px;
+    color: white;
+    font-family: 'Space Grotesk', sans-serif;
+    font-size: 1.5rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+}
+
+.btn-pair:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(124, 58, 237, 0.4);
+}
+
+.pairing-status {
+    margin-top: 2rem;
+    color: var(--text1);
+    font-size: 1.125rem;
+    min-height: 2rem;
+}
+
+.pairing-status.error {
+    color: #ef4444;
+}
+
+.connection-status {
+    margin-top: 1rem;
+    font-size: 1rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+}
+
+.connection-status.connected {
+    color: #10b981;
+}
+
+.connection-status.disconnected {
+    color: #ef4444;
+}
+
+.connection-status::before {
+    content: '';
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    display: inline-block;
+}
+
+.connection-status.connected::before {
+    background: #10b981;
+}
+
+.connection-status.disconnected::before {
+    background: #ef4444;
+}
+
 #app {
     width: 100vw;
     height: 100vh;
@@ -124,8 +272,74 @@ body::after {
     justify-content: center;
 }
 
+#app.hidden {
+    display: none;
+}
+
+.projector-content {
+    width: 100%;
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    position: relative;
+}
+
+.projector-main {
+    text-align: center;
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+}
+
 #traxe-logo {
-    height: 200px;
+    height: 300px;
     width: auto;
+    margin-bottom: 2rem;
     filter: drop-shadow(0 4px 8px rgba(0, 0, 0, 0.8));
+}
+
+.projector-main h1 {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 6rem;
+    font-weight: 400;
+    letter-spacing: 4px;
+    color: var(--text0);
+    text-shadow: 0 4px 8px rgba(0, 0, 0, 0.5);
+}
+
+.lane-info-footer {
+    position: absolute;
+    bottom: 2rem;
+    left: 50%;
+    transform: translateX(-50%);
+    padding: 1rem 2rem;
+    background: rgba(15, 15, 20, 0.85);
+    border: 1px solid var(--line);
+    border-radius: 20px;
+    color: var(--text1);
+    font-size: 1rem;
+    font-weight: 600;
+}
+
+.waiting-message {
+    text-align: center;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 2rem;
+}
+
+.waiting-message p {
+    font-size: 1.5rem;
+    color: var(--text1);
+    font-weight: 500;
+}
+
+.waiting-message .connection-status {
+    margin-top: 1rem;
 }

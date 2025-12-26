@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TRAXE - Admin Dashboard</title>
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Space+Grotesk:wght@400;500;600;700&display=swap">
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <div id="app">
+        <div id="sidebar">
+            <div id="sidebar-header">
+                <img id="traxe-logo" src="/projector/assets/Traxe_Logo.png" alt="TRAXE" />
+                <h1>TRAXE Admin</h1>
+            </div>
+            <nav id="sidebar-nav">
+                <button class="nav-btn" data-page="dashboard">Dashboard</button>
+                <button class="nav-btn active" data-page="lanes">Lanes</button>
+                <button class="nav-btn" data-page="sessions">Sessions</button>
+                <button class="nav-btn" data-page="settings">Settings</button>
+            </nav>
+        </div>
+        
+        <div id="main-content">
+            <div id="page-dashboard" class="page hidden">
+                <h2>Dashboard</h2>
+                <p>Dashboard coming soon...</p>
+            </div>
+            
+            <div id="page-lanes" class="page">
+                <h2>Lanes</h2>
+                <div id="lanes-container">
+                    <!-- Lane cards will be dynamically generated -->
+                </div>
+            </div>
+            
+            <div id="page-sessions" class="page hidden">
+                <h2>Sessions</h2>
+                <p>Sessions coming soon...</p>
+            </div>
+            
+            <div id="page-settings" class="page hidden">
+                <h2>Settings</h2>
+                <p>Settings coming soon...</p>
+            </div>
+        </div>
+    </div>
+
+    <script src="/socket.io/socket.io.js"></script>
+    <script src="main.js"></script>
+</body>
+</html>
+

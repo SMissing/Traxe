@@ -18,6 +18,19 @@
     box-sizing: border-box;
 }
 
+/* Timer */
+.timer {
+    position: fixed;
+    top: 1rem;
+    right: 1rem;
+    font-family: 'Space Grotesk', sans-serif;
+    font-size: 0.875rem;
+    color: #6b7280;
+    z-index: 10000;
+    pointer-events: none;
+    user-select: none;
+}
+
 body {
     font-family: 'Space Grotesk', sans-serif;
     background: linear-gradient(135deg, #1a1a1f 0%, #0f0f12 50%, #050508 100%);

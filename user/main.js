@@ -672,8 +672,35 @@ class GameModeSelector {
 }
 
 // Initialize when DOM is loaded
+let gameModeSelector = null;
+
 document.addEventListener('DOMContentLoaded', () => {
-    new GameModeSelector();
+    // Check if already paired (app visible)
+    const app = document.getElementById('app');
+    if (app && !app.classList.contains('hidden')) {
+        gameModeSelector = new GameModeSelector();
+    } else {
+        // Watch for app becoming visible (after pairing)
+        const observer = new MutationObserver((mutations) => {
+            mutations.forEach((mutation) => {
+                if (mutation.type === 'attributes' && mutation.attributeName === 'class') {
+                    const app = document.getElementById('app');
+                    if (app && !app.classList.contains('hidden') && !gameModeSelector) {
+                        gameModeSelector = new GameModeSelector();
+                    }
+                }
+            });
+        });
+        
+        if (app) {
+            observer.observe(app, { attributes: true });
+        }
+    }
 });
+
+
+
+
+
 
 

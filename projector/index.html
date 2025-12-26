@@ -7,13 +7,48 @@
     <link rel="stylesheet" href="styles.css">
 </head>
 <body>
+    <!-- Timer -->
+    <div id="timer" class="timer">00:00</div>
+    
     <div id="loading-overlay">
         <img id="loading-logo" src="assets/Traxe_Logo.png" alt="TRAXE" />
     </div>
-    <div id="app">
-        <img id="traxe-logo" src="assets/Traxe_Logo.png" alt="TRAXE" />
+    
+    <!-- Pairing Screen -->
+    <div id="pairing-screen" class="pairing-screen">
+        <div class="pairing-container">
+            <img id="traxe-logo-pairing" src="assets/Traxe_Logo.png" alt="TRAXE" />
+            
+            <div class="pairing-input-container">
+                <input 
+                    type="text" 
+                    id="pair-code-input" 
+                    class="pair-code-input" 
+                    placeholder="Enter 4-digit code"
+                    maxlength="4"
+                    autocomplete="off"
+                    autofocus
+                />
+            </div>
+            
+            <button id="pair-submit-btn" class="btn-pair">Connect</button>
+            
+            <div id="pairing-status" class="pairing-status"></div>
+            <div id="connection-status" class="connection-status"></div>
+        </div>
+    </div>
+    
+    <!-- Main App (shown after pairing) -->
+    <div id="app" class="hidden">
+        <div class="projector-content">
+            <div class="projector-main">
+                <img id="traxe-logo" src="assets/Traxe_Logo.png" alt="TRAXE" />
+            </div>
+        </div>
     </div>
 
+    <script src="/socket.io/socket.io.js"></script>
+    <script src="pairing.js"></script>
     <script src="main.js"></script>
 </body>
 </html>

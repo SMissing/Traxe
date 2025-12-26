@@ -222,8 +222,49 @@ class ClassicUserPage {
     }
 }
 
+// Timer function - countdown from lock-in expiration
+function startTimer() {
+    const updateTimer = () => {
+        const timerEl = document.getElementById('timer');
+        if (!timerEl) return;
+        
+        // Get lock-in expiration time
+        const savedLockIn = localStorage.getItem('traxe_lock_in');
+        if (!savedLockIn) {
+            timerEl.textContent = '00:00';
+            return;
+        }
+        
+        try {
+            const lockIn = JSON.parse(savedLockIn);
+            const now = Date.now();
+            const timeRemaining = lockIn.lockedUntil - now;
+            
+            if (timeRemaining <= 0) {
+                timerEl.textContent = '00:00';
+                localStorage.removeItem('traxe_lock_in');
+                return;
+            }
+            
+            // Calculate minutes and seconds remaining
+            const minutes = Math.floor(timeRemaining / 60000);
+            const seconds = Math.floor((timeRemaining % 60000) / 1000);
+            
+            timerEl.textContent = `${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`;
+        } catch (e) {
+            console.error('Error parsing lock-in for timer:', e);
+            timerEl.textContent = '00:00';
+        }
+    };
+    
+    // Update immediately and then every second
+    updateTimer();
+    setInterval(updateTimer, 1000);
+}
+
 // Initialize when DOM is loaded
 document.addEventListener('DOMContentLoaded', () => {
     new ClassicUserPage();
+    startTimer();
 });
 
